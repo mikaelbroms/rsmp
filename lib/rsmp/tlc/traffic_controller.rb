@@ -260,7 +260,11 @@ module RSMP
       def handle_m0002 arg, options={}
         @node.verify_security_code 2, arg['securityCode']
         if TrafficControllerSite.from_rsmp_bool(arg['status'])
-          switch_plan arg['timeplan'], source: 'force'
+          if arg['timeplan'] == nil
+            dont_acknowledge 'parameter timeplan is required'
+          else
+            switch_plan arg['timeplan'], source: 'force'
+          end
         else
           switch_plan 0, source: 'startup'     # TODO use clock/calender
         end
@@ -457,7 +461,7 @@ module RSMP
             vehicleType = arg['vehicleType']
             @signal_priorities << SignalPriority.new(node:self, id:id, level:level, eta:eta, vehicleType:vehicleType)
             log "Priority request for signal group #{signal_group.c_id} received with id #{id}", level: :info
-          end          
+          end
         when 'update'
           if priority
             log "Priority Request #{id} updated", level: :info
@@ -469,7 +473,7 @@ module RSMP
             @signal_priorities.delete priority
           else
             raise MessageRejected.new("Cannot cancel priority request #{id}, not found")
-          end    
+          end
         else
           raise MessageRejected.new("Unknown type #{type}")
         end
@@ -544,7 +548,7 @@ module RSMP
           @functional_position_timeout = now + timeout
         else
           log "Switching to functional position #{mode}", level: :info
-        end 
+        end
         if mode == 'NormalControl'
           initiate_startup_sequence if @function_position != 'NormalControl'
         end
